@@ -1,4 +1,4 @@
-import {Button,Input,Select,Option,Checkbox} from 'element-ui'
+import {Button,Input,Select,Option,Checkbox,Notification} from 'element-ui'
 export default {
   install:function(Vue){
     Vue.use(Button)
@@ -6,5 +6,6 @@ export default {
     Vue.use(Select)
     Vue.use(Option)
     Vue.use(Checkbox)
+    Vue.prototype.$notify = Notification
   }
 }

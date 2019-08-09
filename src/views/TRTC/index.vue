@@ -190,6 +190,7 @@ export default {
       this.client.startProxyServer();
       this.client.init(this.appId ,  () =>{
           this.client.join(this.token, this.channel,this.uid, (uid) =>{
+            this.uid = uid
             console.log("User " + uid + " join channel successfully" + new Date().toLocaleTimeString());
             this.localStreams.push(uid)
             if(this.isHost){
@@ -212,9 +213,12 @@ export default {
               this.localStream.on("accessDenied", function() {
                 console.log("accessDenied"+new Date().toLocaleTimeString());
               });
-
               this.localStream.init(() =>{
                 this.localStream.play('screen');
+                this.$notify({
+                  title: '通知',
+                  message: `${uid} 加入了房间${this.channel}`
+                });
                 // publish start
                 this.client.publish(this.localStream, function (err) {
                   console.log("Publish local stream error: " + err + new Date().toLocaleTimeString());
@@ -262,12 +266,13 @@ export default {
         }
       });
 
-      currentClient.on('stream-subscribed', function (evt) {
+      currentClient.on('stream-subscribed', (evt) =>{
         var stream = evt.stream;
         let streamId = stream.getId()
         console.log("222222222222222 Subscribe remote stream successfully: " + streamId);
         if ($('#user #agora_remote'+streamId).length === 0) {
           console.log('append 111111111111')
+          // this.getstats()
           $('#user').append('<div class="agora_remote" id="agora_remote'+streamId +'"></div>');
         }
         stream.play('agora_remote' + streamId);
@@ -281,13 +286,27 @@ export default {
         console.log("Remote stream is removed " + streamId);
       });
 
-      currentClient.on('peer-leave', function (evt) {  //，即对方调用了 Client.leave。已离开频道
+      currentClient.on('peer-leave',  (evt)=> {  //，即对方调用了 Client.leave。已离开频道
         var stream = evt.stream;
+        let id = stream.getId()
+        this.$notify({
+          title: '通知',
+          message: `${id} 离开了房间${this.channel};`
+        });
         if (stream) {
+          this.localStreams.splice(this.localStreams.indexOf(id),1)
           stream.stop();
-          $('#agora_remote' + stream.getId()).remove();
+          $('#agora_remote' + id).remove();
           console.log(evt.uid + " leaved from this channel");
         }
+      });
+      currentClient.on("peer-online", (evt)=> {
+        // if(evt.uid === this.uid) return false
+        console.log('加入加入加入加入加入加入加入加入')
+         this.$notify({
+          title: '通知',
+          message: `${evt.uid} 加入了房间${this.channel};`
+        });
       });
       // subscribe end
     },
@@ -437,7 +456,15 @@ export default {
         isLB: /lbbrowser/.test(UserAgent), // 猎豹浏览器
         isWX: /micromessenger/.test(UserAgent), // 微信内置浏览器
         isQQ: /qqbrowser/.test(UserAgent) // QQ浏览器
-      };
+      }
+    },
+    getstats(){
+      this.client && this.client.getSessionStats((data)=>{
+        this.$notify({
+          title: '通知',
+          message: `时间：${data.Duration}  房间人数：${data.UserCount}`
+        });
+      })
     }
 
   }
