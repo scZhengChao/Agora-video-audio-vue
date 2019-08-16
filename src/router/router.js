@@ -10,7 +10,7 @@ export default new Router({
     {
       path: '/',
       name: 'TRTC',
-      component: () => import(/* webpackChunkName: "about" */ '../views/TRTC/index.vue')
+      component: () => import(/* webpackChunkName: "about" */ '../views/TRTC/Video.vue')
     },
   ]
 })

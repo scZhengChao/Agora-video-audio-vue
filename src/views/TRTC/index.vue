@@ -2,8 +2,8 @@
   <div>
     <div class="news">
       <div class="text">
-        <p>当前人数: <span></span></p>
-        <p>通话时长: <span></span></p>
+        <p>当前人数: <span>{{userCount}}</span></p>
+        <p>通话时长: <span>{{duration}}</span></p>
         <p>房间号: <input v-model="channel" type='text'/></p>
       </div>
       <div class="handle">
@@ -80,6 +80,9 @@ export default {
     token:null,
     channel:'1000',
     uid:undefined,
+    duration:'',
+    userCount:'',
+    timerStats:null,
 
     getSupportCodec:{
       audio:[],
@@ -129,7 +132,7 @@ export default {
       if(!this.localStream) return false
       isMute?this.localStream.unmuteAudio():this.localStream.muteAudio()
         // this.localStream.setAudioVolume(0)
-        // this.localStream.setAudioVolume(100)
+        // this.localStream.setAudioVolume(100)   
     },
     handleCamera(isCamera){
       if(!this.localStream) return false
@@ -191,6 +194,7 @@ export default {
       this.client.init(this.appId ,  () =>{
           this.client.join(this.token, this.channel,this.uid, (uid) =>{
             this.uid = uid
+            this.timerStats = setInterval(this.getstats,1000)
             console.log("User " + uid + " join channel successfully" + new Date().toLocaleTimeString());
             this.localStreams.push(uid)
             if(this.isHost){
@@ -300,7 +304,7 @@ export default {
           console.log(evt.uid + " leaved from this channel");
         }
       });
-      currentClient.on("peer-online", (evt)=> {
+      currentClient.on("peer-online", (evt)=>{
         // if(evt.uid === this.uid) return false
         console.log('加入加入加入加入加入加入加入加入')
          this.$notify({
@@ -318,8 +322,9 @@ export default {
         this.client && this.client.unpublish(this.localStream)
         this.localStream && this.localStream.close()  //该方法关闭视频流或音频流。调用该方法会取消摄像头和麦克风的访问权限。
         this.client &&  
-        this.client.leave(function () {
+        this.client.leave( ()=>{
           console.log("Leavel channel successfully");
+          clearInterval(this.timerStats)
         }, function (err) {
           console.log("Leave channel failed");
         });
@@ -344,11 +349,11 @@ export default {
         console.log('switch video device failed' + err)
       })
     },
-    shareScreen(){
+    shareScreen(){ 
       this.shareScreenDisabled = true
       this.screenClient = AgoraRTC.createClient({mode: 'rtc', codec: "vp8"});
       this.screenClient.init(this.appId ,  () =>{
-          this.screenClient.join(this.token, this.channel,this.uid, (uid) =>{
+          this.screenClient.join(this.token, this.channel,undefined, (uid) =>{
             this.localStreams.push(uid)
             console.log("User " + uid + " join channel successfully" + new Date().toLocaleTimeString());
             if(this.isHost){
@@ -379,7 +384,7 @@ export default {
                   this.localStream.stop('screen')  //相对于 play 来说
                   $('#user').append('<div class="agora_remote" id="agora_remote'+this.localStream.getId() +'"></div>');
                   this.localStream.play('agora_remote' + this.localStream.getId())  //相对于 play 来说
-                }
+                } 
                 // publish start
                 this.screenClient.publish(this.screenStream, function (err) {
                   console.log("Publish local stream error: " + err + new Date().toLocaleTimeString());
@@ -460,10 +465,10 @@ export default {
     },
     getstats(){
       this.client && this.client.getSessionStats((data)=>{
-        this.$notify({
-          title: '通知',
-          message: `时间：${data.Duration}  房间人数：${data.UserCount}`
-        });
+      
+        this.duration =  data.Duration 
+        this.userCount =  data.UserCount
+        
       })
     }
 
